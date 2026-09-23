@@ -468,6 +468,26 @@ extension AbstractPlayable: PlayableContainable {
     try await syncer.setFavorite(song: song, isFavorite: isFavorite)
   }
 
+  /// Rating value applied by the one-tap down-vote action
+  public static let downVoteRating = 1
+
+  public var isDownVoted: Bool {
+    (asSong?.rating ?? 0) == Self.downVoteRating
+  }
+
+  @MainActor
+  public func remoteToggleDownVote(syncer: LibrarySyncer) async throws {
+    guard let song = asSong else { return }
+    guard let context = song.managedObject.managedObjectContext else {
+      throw BackendError.persistentSaveFailed
+    }
+    let newRating = isDownVoted ? 0 : Self.downVoteRating
+    song.rating = newRating
+    let library = LibraryStorage(context: context)
+    library.saveContext()
+    try await syncer.setRating(song: song, rating: newRating)
+  }
+
   public var isDownloadAvailable: Bool {
     switch derivedType {
     case .song:

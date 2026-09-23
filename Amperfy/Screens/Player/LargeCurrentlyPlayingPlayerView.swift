@@ -150,6 +150,10 @@ class LargeCurrentlyPlayingPlayerView: UIView, UIGestureRecognizerDelegate {
   @IBOutlet
   weak var favoriteButton: UIButton!
   @IBOutlet
+  weak var downVoteButton: UIButton!
+  @IBOutlet
+  weak var downVoteButtonWidthConstraint: NSLayoutConstraint!
+  @IBOutlet
   weak var optionsButton: UIButton!
 
   required init?(coder aDecoder: NSCoder) {
@@ -428,6 +432,10 @@ class LargeCurrentlyPlayingPlayerView: UIView, UIGestureRecognizerDelegate {
       albumContainerView: albumContainerView
     )
     rootView?.refreshFavoriteButton(button: favoriteButton)
+    rootView?.refreshDownVoteButton(
+      button: downVoteButton,
+      widthConstraint: downVoteButtonWidthConstraint
+    )
     rootView?.refreshOptionButton(button: optionsButton, rootView: rootView)
     refreshRating()
     display(element: displayElement)
@@ -480,6 +488,11 @@ class LargeCurrentlyPlayingPlayerView: UIView, UIGestureRecognizerDelegate {
     rootView?.favoritePressed()
     rootView?.refreshFavoriteButton(button: favoriteButton)
   }
+
+  @IBAction
+  func downVotePressed(_ sender: Any) {
+    rootView?.downVotePressed()
+  }
 }
 
 // MARK: RatingViewDelegate
@@ -492,6 +505,7 @@ extension LargeCurrentlyPlayingPlayerView: RatingViewDelegate {
 
     // Update local rating immediately for responsive UI
     song.rating = rating
+    appDelegate.storage.main.saveContext()
 
     // Sync rating to server
     Task {

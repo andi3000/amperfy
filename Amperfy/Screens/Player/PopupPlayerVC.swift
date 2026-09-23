@@ -258,6 +258,24 @@ class PopupPlayerVC: UIViewController, UIScrollViewDelegate {
     }
   }
 
+  func downVotePressed() {
+    guard player.playerMode == .music,
+          appDelegate.storage.settings.user.isOnlineMode,
+          let playableInfo = player.currentlyPlaying,
+          playableInfo.isRateable,
+          let account = playableInfo.account else { return }
+    Task { @MainActor in
+      do {
+        try await playableInfo.remoteToggleDownVote(
+          syncer: self.appDelegate.getMeta(account.info).librarySyncer
+        )
+      } catch {
+        self.appDelegate.eventLogger.report(topic: "Toggle Down-Vote", error: error)
+      }
+      self.refresh()
+    }
+  }
+
   func displayArtistDetail() {
     if let song = player.currentlyPlaying?.asSong, let artist = song.artist,
        let account = artist.account {

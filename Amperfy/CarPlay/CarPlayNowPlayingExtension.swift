@@ -74,7 +74,34 @@ extension CarPlaySceneDelegate {
           )
         )
       }
+      if let currentlyPlaying = appDelegate.player.currentlyPlaying,
+         currentlyPlaying.isRateable,
+         appDelegate.storage.settings.user.isOnlineMode {
+        buttons.append(
+          CPNowPlayingImageButton(
+            image: currentlyPlaying.isDownVoted ? .thumbsDownFill : .thumbsDown,
+            handler: { [weak self] button in
+              guard let self = self else { return }
+              guard let playableInfo = appDelegate.player.currentlyPlaying,
+                    let account = playableInfo.account else { return }
+              Task { @MainActor in
+                do {
+                  try await playableInfo
+                    .remoteToggleDownVote(
+                      syncer: self.appDelegate
+                        .getMeta(account.info).librarySyncer
+                    )
+                } catch {
+                  self.appDelegate.eventLogger.report(topic: "Toggle Down-Vote", error: error)
+                }
+                self.configureNowPlayingTemplate()
+              }
+            }
+          )
+        )
+      }
     }
+    // CPNowPlayingTemplate allows a maximum of 5 Now Playing buttons; extras are dropped.
     buttons.append(
       CPNowPlayingPlaybackRateButton(handler: { [weak self] button in
         guard let self = self else { return }

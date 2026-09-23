@@ -37,6 +37,10 @@ class CurrentlyPlayingTableCell: BasicTableCell {
   @IBOutlet
   weak var favoriteButton: UIButton!
   @IBOutlet
+  weak var downVoteButton: UIButton!
+  @IBOutlet
+  weak var downVoteButtonWidthConstraint: NSLayoutConstraint!
+  @IBOutlet
   weak var optionsButton: UIButton!
 
   required init?(coder aDecoder: NSCoder) {
@@ -57,6 +61,10 @@ class CurrentlyPlayingTableCell: BasicTableCell {
       artistLabel: artistLabel
     )
     rootView?.refreshFavoriteButton(button: favoriteButton)
+    rootView?.refreshDownVoteButton(
+      button: downVoteButton,
+      widthConstraint: downVoteButtonWidthConstraint
+    )
     rootView?.refreshOptionButton(button: optionsButton, rootView: rootView)
   }
 
@@ -85,5 +93,10 @@ class CurrentlyPlayingTableCell: BasicTableCell {
   func favoritePressed(_ sender: Any) {
     rootView?.favoritePressed()
     rootView?.refreshFavoriteButton(button: favoriteButton)
+  }
+
+  @IBAction
+  func downVotePressed(_ sender: Any) {
+    rootView?.downVotePressed()
   }
 }

@@ -89,6 +89,21 @@
                             <action selector="favoritePressed:" destination="gve-H7-PxP" eventType="touchUpInside" id="nof-ey-DEY"/>
                         </connections>
                     </button>
+                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" preferredBehavioralStyle="pad" translatesAutoresizingMaskIntoConstraints="NO" id="Dv2-oW-nV2" userLabel="Down Vote">
+                        <rect key="frame" x="291" y="32" width="30" height="30"/>
+                        <constraints>
+                            <constraint firstAttribute="width" secondItem="Dv2-oW-nV2" secondAttribute="height" multiplier="1:1" id="Dv2-a1-0bb"/>
+                            <constraint firstAttribute="width" constant="30" id="Dv2-w1-0aa"/>
+                        </constraints>
+                        <state key="normal" title="Button"/>
+                        <buttonConfiguration key="configuration" style="gray" buttonSize="small">
+                            <imageReference key="image" image="hand.thumbsdown" catalog="system" symbolScale="medium"/>
+                            <backgroundConfiguration key="background"/>
+                        </buttonConfiguration>
+                        <connections>
+                            <action selector="downVotePressed:" destination="gve-H7-PxP" eventType="touchUpInside" id="Dv2-ac-0cc"/>
+                        </connections>
+                    </button>
                     <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" preferredBehavioralStyle="pad" translatesAutoresizingMaskIntoConstraints="NO" id="awQ-BG-bfX" userLabel="Options">
                         <rect key="frame" x="329" y="32" width="30" height="30"/>
                         <constraints>
@@ -113,7 +128,9 @@
                     <constraint firstItem="gmN-OC-LuP" firstAttribute="bottom" secondItem="vJs-cv-sQf" secondAttribute="bottom" id="8Tb-0K-Q41"/>
                     <constraint firstItem="O9L-T9-lNw" firstAttribute="leading" secondItem="xdv-qI-JIo" secondAttribute="leading" id="8eA-9D-Ncn"/>
                     <constraint firstItem="3q7-oA-9sM" firstAttribute="leading" secondItem="BqX-0l-UXJ" secondAttribute="leading" id="AjR-gn-cfi"/>
-                    <constraint firstItem="awQ-BG-bfX" firstAttribute="leading" secondItem="FXO-Ca-aCo" secondAttribute="trailing" constant="8" id="C59-7r-Oj5"/>
+                    <constraint firstItem="awQ-BG-bfX" firstAttribute="leading" secondItem="Dv2-oW-nV2" secondAttribute="trailing" constant="8" id="C59-7r-Oj5"/>
+                    <constraint firstItem="Dv2-oW-nV2" firstAttribute="leading" secondItem="FXO-Ca-aCo" secondAttribute="trailing" constant="8" id="Dv2-c1-0dd"/>
+                    <constraint firstItem="Dv2-oW-nV2" firstAttribute="centerY" secondItem="FXO-Ca-aCo" secondAttribute="centerY" id="Dv2-c2-0ee"/>
                     <constraint firstItem="O9L-T9-lNw" firstAttribute="bottom" secondItem="xdv-qI-JIo" secondAttribute="bottom" id="EQO-YY-1tc"/>
                     <constraint firstItem="BqX-0l-UXJ" firstAttribute="top" secondItem="3q7-oA-9sM" secondAttribute="top" id="Ekr-0Y-5qx"/>
                     <constraint firstItem="O9L-T9-lNw" firstAttribute="top" secondItem="xdv-qI-JIo" secondAttribute="top" id="GE8-PE-KdW"/>
@@ -142,6 +159,8 @@
             <connections>
                 <outlet property="artistLabel" destination="O9L-T9-lNw" id="fta-WU-Qep"/>
                 <outlet property="artworkImage" destination="vJs-cv-sQf" id="Fu8-Kn-hgM"/>
+                <outlet property="downVoteButton" destination="Dv2-oW-nV2" id="Dv2-o1-0ff"/>
+                <outlet property="downVoteButtonWidthConstraint" destination="Dv2-w1-0aa" id="Dv2-o2-0gg"/>
                 <outlet property="favoriteButton" destination="FXO-Ca-aCo" id="OxE-u5-ilO"/>
                 <outlet property="optionsButton" destination="awQ-BG-bfX" id="fIf-6E-or5"/>
                 <outlet property="titleLabel" destination="BqX-0l-UXJ" id="YaU-Lk-sSE"/>
@@ -159,6 +178,7 @@
     </designables>
     <resources>
         <image name="ellipsis" catalog="system" width="128" height="37"/>
+        <image name="hand.thumbsdown" catalog="system" width="128" height="115"/>
         <image name="heart" catalog="system" width="128" height="107"/>
         <systemColor name="labelColor">
             <color white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>

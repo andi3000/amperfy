@@ -142,6 +142,10 @@ class EntityPreviewActionBuilder {
        appDelegate.storage.settings.user.isOnlineMode {
       ratingFavActions.append(createFavoriteMenu(libraryEntity: libraryEntity))
     }
+    if let playable = entityContainer as? AbstractPlayable, playable.isRateable,
+       appDelegate.storage.settings.user.isOnlineMode {
+      ratingFavActions.append(createDownVoteMenu(playable: playable))
+    }
     if let libraryEntity = entityContainer as? AbstractLibraryEntity, entityContainer.isRateable,
        appDelegate.storage.settings.user.isOnlineMode {
       ratingFavActions.append(createRatingMenu(libraryEntity: libraryEntity))
@@ -568,6 +572,30 @@ class EntityPreviewActionBuilder {
     }
   }
 
+  private func createDownVoteMenu(playable: AbstractPlayable) -> UIAction {
+    playable.isDownVoted ?
+      UIAction(title: "Unmark down-vote", image: .thumbsDownFill) { action in
+        self.toggleDownVote()
+      } :
+      UIAction(title: "Down-Vote", image: .thumbsDown) { action in self.toggleDownVote() }
+  }
+
+  private func toggleDownVote() {
+    guard appDelegate.storage.settings.user.isOnlineMode,
+          let playable = entityContainer as? AbstractPlayable,
+          let account = entityContainer.account else { return }
+    Task { @MainActor in
+      do {
+        try await playable.remoteToggleDownVote(
+          syncer: self.appDelegate.getMeta(account.info).librarySyncer
+        )
+      } catch {
+        self.appDelegate.eventLogger.report(topic: "Toggle Down-Vote", error: error)
+      }
+      self.reloadRootView()
+    }
+  }
+
   private func createRatingMenu(libraryEntity: AbstractLibraryEntity) -> UIMenu {
     let rating = libraryEntity
       .rating == 0 ? "Not rated" :
@@ -899,6 +927,7 @@ class EntityPreviewActionBuilder {
       rootTableView.tableView.reloadData()
     } else if let popupPlayer = rootView as? PopupPlayerVC {
       popupPlayer.tableView.reloadData()
+      popupPlayer.refreshCurrentlyPlayingInfoView()
     }
     if let splitVC = rootView as? SplitVC,
        let queueVC = splitVC.viewController(for: .inspector) as? QueueVC {

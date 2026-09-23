@@ -85,20 +85,32 @@
                     <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="ZTB-B7-OZR" userLabel="Favorite Container View">
                         <rect key="frame" x="16" y="15" width="16" height="40"/>
                         <subviews>
-                            <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="suit.heart.fill" catalog="system" translatesAutoresizingMaskIntoConstraints="NO" id="ww2-RJ-EgX" userLabel="Favorite Icon">
-                                <rect key="frame" x="2" y="15.5" width="12" height="9.5"/>
-                                <color key="tintColor" systemColor="systemRedColor"/>
-                                <constraints>
-                                    <constraint firstAttribute="height" constant="12" id="DXc-FO-IFH"/>
-                                    <constraint firstAttribute="width" secondItem="ww2-RJ-EgX" secondAttribute="height" multiplier="1:1" id="awP-Bj-bNx"/>
-                                </constraints>
-                            </imageView>
+                            <stackView opaque="NO" contentMode="scaleToFill" axis="vertical" alignment="center" spacing="1" translatesAutoresizingMaskIntoConstraints="NO" id="Dv3-st-k01" userLabel="Status Icon Stack">
+                                <rect key="frame" x="2" y="7.5" width="12" height="25"/>
+                                <subviews>
+                                    <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="suit.heart.fill" catalog="system" translatesAutoresizingMaskIntoConstraints="NO" id="ww2-RJ-EgX" userLabel="Favorite Icon">
+                                        <rect key="frame" x="0.0" y="0.0" width="12" height="12"/>
+                                        <color key="tintColor" systemColor="systemRedColor"/>
+                                        <constraints>
+                                            <constraint firstAttribute="height" constant="12" id="DXc-FO-IFH"/>
+                                            <constraint firstAttribute="width" secondItem="ww2-RJ-EgX" secondAttribute="height" multiplier="1:1" id="awP-Bj-bNx"/>
+                                        </constraints>
+                                    </imageView>
+                                    <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="hand.thumbsdown.fill" catalog="system" translatesAutoresizingMaskIntoConstraints="NO" id="Dv3-dv-i01" userLabel="Down Vote Icon">
+                                        <rect key="frame" x="0.0" y="13" width="12" height="12"/>
+                                        <constraints>
+                                            <constraint firstAttribute="height" constant="12" id="Dv3-h1-i02"/>
+                                            <constraint firstAttribute="width" secondItem="Dv3-dv-i01" secondAttribute="height" multiplier="1:1" id="Dv3-a1-i03"/>
+                                        </constraints>
+                                    </imageView>
+                                </subviews>
+                            </stackView>
                         </subviews>
                         <constraints>
                             <constraint firstAttribute="width" constant="16" id="Eo4-gu-hwz"/>
                             <constraint firstAttribute="height" constant="40" id="MNk-jZ-v33"/>
-                            <constraint firstItem="ww2-RJ-EgX" firstAttribute="centerX" secondItem="ZTB-B7-OZR" secondAttribute="centerX" id="YBR-Ob-8hx"/>
-                            <constraint firstItem="ww2-RJ-EgX" firstAttribute="centerY" secondItem="ZTB-B7-OZR" secondAttribute="centerY" id="aK9-QK-WNg"/>
+                            <constraint firstItem="Dv3-st-k01" firstAttribute="centerX" secondItem="ZTB-B7-OZR" secondAttribute="centerX" id="YBR-Ob-8hx"/>
+                            <constraint firstItem="Dv3-st-k01" firstAttribute="centerY" secondItem="ZTB-B7-OZR" secondAttribute="centerY" id="aK9-QK-WNg"/>
                         </constraints>
                     </view>
                     <progressView opaque="NO" contentMode="scaleToFill" verticalHuggingPriority="750" progress="0.5" translatesAutoresizingMaskIntoConstraints="NO" id="4NS-Qv-02y">
@@ -225,6 +237,7 @@
                 <outlet property="cacheTrailingCellConstaint" destination="689-Vc-7ao" id="6J7-6Z-UNH"/>
                 <outlet property="deleteButton" destination="l8v-65-XtX" id="BlT-4f-Hok"/>
                 <outlet property="downloadProgress" destination="4NS-Qv-02y" id="vZf-uL-wef"/>
+                <outlet property="downVoteIconImage" destination="Dv3-dv-i01" id="Dv3-o1-i04"/>
                 <outlet property="durationLabel" destination="XQO-xE-pLx" id="LV8-46-i0Q"/>
                 <outlet property="durationTrailingCellConstraint" destination="ew4-ya-VWk" id="tBt-EX-jFh"/>
                 <outlet property="entityImage" destination="Uwb-Vy-dE7" id="hLh-iq-m4X"/>
@@ -243,6 +256,7 @@
     <resources>
         <image name="arrow.down.circle" catalog="system" width="128" height="123"/>
         <image name="ellipsis" catalog="system" width="128" height="37"/>
+        <image name="hand.thumbsdown.fill" catalog="system" width="128" height="115"/>
         <image name="minus.circle.fill" catalog="system" width="128" height="123"/>
         <image name="play.fill" catalog="system" width="120" height="128"/>
         <image name="suit.heart.fill" catalog="system" width="128" height="107"/>

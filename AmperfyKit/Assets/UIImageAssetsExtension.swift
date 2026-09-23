@@ -245,6 +245,8 @@ public struct AmperfyImage: Sendable {
   public static let stop = Self("stop.fill")
   public static let stopMenu = Self("stop")
   public static let switchPlayerWindow = Self("play.rectangle.on.rectangle")
+  public static let thumbsDown = Self("hand.thumbsdown")
+  public static let thumbsDownFill = Self("hand.thumbsdown.fill")
   public static let trash = Self("trash")
   public static let triangleDown = Self("arrowtriangle.down.fill")
   public static let unSelected = Self("circle")
@@ -394,6 +396,9 @@ extension UIImage {
     .create(systemName: AmperfyImage.startDownload.systemName)
   public static let stop = UIImage.create(systemName: AmperfyImage.stop.systemName)
   public static let stopMenu = UIImage.create(systemName: AmperfyImage.stopMenu.systemName)
+  public static let thumbsDown = UIImage.create(systemName: AmperfyImage.thumbsDown.systemName)
+  public static let thumbsDownFill = UIImage
+    .create(systemName: AmperfyImage.thumbsDownFill.systemName)
   public static let trash = UIImage.create(systemName: AmperfyImage.trash.systemName)
   public static let triangleDown = UIImage.create(systemName: AmperfyImage.triangleDown.systemName)
   public static let unSelected = UIImage.create(systemName: AmperfyImage.unSelected.systemName)

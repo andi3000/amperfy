@@ -105,6 +105,27 @@ extension PopupPlayerVC {
     button.configuration = config
   }
 
+  func refreshDownVoteButton(button: UIButton, widthConstraint: NSLayoutConstraint?) {
+    let isDownVoteAvailable = (player.playerMode == .music) &&
+      (player.currentlyPlaying?.isRateable ?? false)
+    // Hide and collapse for podcasts, radios and an empty player instead of only disabling
+    button.isHidden = !isDownVoteAvailable
+    widthConstraint?.constant = isDownVoteAvailable ? 30 : 0
+    guard isDownVoteAvailable, let playableInfo = player.currentlyPlaying else {
+      button.isEnabled = false
+      return
+    }
+    var config = UIButton.Configuration.playerRound()
+    config.image = playableInfo.isDownVoted ? .thumbsDownFill : .thumbsDown
+    config.baseForegroundColor = appDelegate.storage.settings.user
+      .isOnlineMode ? .systemBlue : .label
+    button.isEnabled = appDelegate.storage.settings.user.isOnlineMode
+    if #available(iOS 17.0, *) {
+      button.isSymbolAnimationEnabled = true
+    }
+    button.configuration = config
+  }
+
   func refreshBackgroundItemArtwork() {
     var artwork: UIImage?
     var themePreference: ThemePreference = appDelegate.storage.settings.accounts.activeSetting.read

@@ -195,6 +195,34 @@ public class RemoteCommandCenterHandler {
       }
       return .success
     })
+
+    remoteCommandCenter.dislikeCommand.isEnabled = true
+    remoteCommandCenter.dislikeCommand.localizedTitle = NSLocalizedString(
+      "Down-Vote",
+      comment: "Rates the currently playing song with one star"
+    )
+    remoteCommandCenter.dislikeCommand.addTarget(handler: { event in
+      guard let command = event as? MPFeedbackCommandEvent,
+            let currentItem = self.musicPlayer.currentlyPlaying,
+            currentItem.isRateable
+      else { return .noSuchContent }
+      guard command.isNegative == currentItem.isDownVoted else {
+        self.remoteCommandCenter.dislikeCommand.isActive = currentItem.isDownVoted
+        return .success
+      }
+      self.remoteCommandCenter.dislikeCommand.isActive = !command.isNegative
+      Task { @MainActor in
+        do {
+          if let accountInfo = currentItem.account?.info {
+            let librarySyncer = self.getLibrarySyncerCB(accountInfo)
+            try await currentItem.remoteToggleDownVote(syncer: librarySyncer)
+          }
+        } catch {
+          self.eventLogger.report(topic: "Toggle Down-Vote", error: error)
+        }
+      }
+      return .success
+    })
   }
 
   func changeRemoteCommandCenterControlsBasedOnCurrentPlayableType() {
@@ -213,6 +241,8 @@ public class RemoteCommandCenterHandler {
       remoteCommandCenter.changeRepeatModeCommand.isEnabled = true
       remoteCommandCenter.likeCommand.isEnabled = true
       remoteCommandCenter.likeCommand.isActive = currentItem.isFavorite
+      remoteCommandCenter.dislikeCommand.isEnabled = true
+      remoteCommandCenter.dislikeCommand.isActive = currentItem.isDownVoted
       remoteCommandCenter.changePlaybackPositionCommand.isEnabled = true
       remoteCommandCenter.changePlaybackRateCommand.isEnabled = true
     case .podcastEpisode:
@@ -228,6 +258,8 @@ public class RemoteCommandCenterHandler {
       remoteCommandCenter.changeRepeatModeCommand.isEnabled = false
       remoteCommandCenter.likeCommand.isEnabled = false
       remoteCommandCenter.likeCommand.isActive = false
+      remoteCommandCenter.dislikeCommand.isEnabled = false
+      remoteCommandCenter.dislikeCommand.isActive = false
       remoteCommandCenter.changePlaybackPositionCommand.isEnabled = true
       remoteCommandCenter.changePlaybackRateCommand.isEnabled = true
     case .radio:
@@ -243,6 +275,8 @@ public class RemoteCommandCenterHandler {
       remoteCommandCenter.changeRepeatModeCommand.isEnabled = true
       remoteCommandCenter.likeCommand.isEnabled = false
       remoteCommandCenter.likeCommand.isActive = false
+      remoteCommandCenter.dislikeCommand.isEnabled = false
+      remoteCommandCenter.dislikeCommand.isActive = false
       remoteCommandCenter.changePlaybackPositionCommand.isEnabled = false
       remoteCommandCenter.changePlaybackRateCommand.isEnabled = false
     }

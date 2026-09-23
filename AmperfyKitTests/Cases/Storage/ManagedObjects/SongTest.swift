@@ -163,6 +163,16 @@ class SongTest: XCTestCase {
     XCTAssertEqual(testSong.rating, 2)
   }
 
+  func testDownVoteToggle() {
+    XCTAssertFalse(testSong.isDownVoted)
+    testSong.rating = 1
+    XCTAssertTrue(testSong.isDownVoted)
+    testSong.rating = 3
+    XCTAssertFalse(testSong.isDownVoted)
+    testSong.rating = 0
+    XCTAssertFalse(testSong.isDownVoted)
+  }
+
   func testSongDeleteCache() {
     guard let artist = library.getArtist(for: account, id: cdHelper.seeder.artists[0].id)
     else { XCTFail(); return }

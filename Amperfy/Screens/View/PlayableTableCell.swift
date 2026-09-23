@@ -62,6 +62,8 @@ class PlayableTableCell: BasicTableCell {
   weak private var cacheIconImage: UIImageView!
   @IBOutlet
   weak private var favoriteIconImage: UIImageView!
+  @IBOutlet
+  weak private var downVoteIconImage: UIImageView!
 
   @IBOutlet
   weak var titleContainerLeadingConstraint: NSLayoutConstraint!
@@ -394,6 +396,9 @@ class PlayableTableCell: BasicTableCell {
     guard let playable = playable else { return }
     favoriteIconImage.isHidden = !playable.isFavorite
     favoriteIconImage.tintColor = .red
+
+    downVoteIconImage.isHidden = !playable.isDownVoted
+    downVoteIconImage.tintColor = .systemBlue
 
     let isDurationVisible = !playable.isRadio &&
       (
