@@ -31,6 +31,8 @@ extension LogEntryMO {
   @NSManaged
   public var creationDate: Date
   @NSManaged
+  public var detailMessage: String?
+  @NSManaged
   public var message: String
   @NSManaged
   public var statusCode: Int32
