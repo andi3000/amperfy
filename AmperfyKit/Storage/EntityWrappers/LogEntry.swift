@@ -59,6 +59,11 @@ public class LogEntry: NSObject {
     set { managedObject.message = newValue }
   }
 
+  public var detailMessage: String? {
+    get { managedObject.detailMessage }
+    set { managedObject.detailMessage = newValue }
+  }
+
   public var statusCode: Int {
     get { Int(managedObject.statusCode) }
     set { managedObject.statusCode = Int32(newValue) }
@@ -74,13 +79,14 @@ public class LogEntry: NSObject {
 
 extension LogEntry: Encodable {
   enum CodingKeys: String, CodingKey {
-    case creationDate, message, statusCode, type
+    case creationDate, message, detailMessage, statusCode, type
   }
 
   public func encode(to encoder: Encoder) throws {
     var container = encoder.container(keyedBy: CodingKeys.self)
     try container.encode(creationDate, forKey: .creationDate)
     try container.encode(message, forKey: .message)
+    try container.encodeIfPresent(detailMessage, forKey: .detailMessage)
     try container.encode(statusCode, forKey: .statusCode)
     try container.encode(type.description, forKey: .type)
   }

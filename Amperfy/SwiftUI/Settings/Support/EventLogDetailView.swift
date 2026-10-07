@@ -1,9 +1,9 @@
 //
-//  EventLogCellView.swift
+//  EventLogDetailView.swift
 //  Amperfy
 //
-//  Created by Maximilian Bauer on 19.09.22.
-//  Copyright (c) 2022 Maximilian Bauer. All rights reserved.
+//  Created by Claude on 07.10.26.
+//  Copyright (c) 2026 Maximilian Bauer. All rights reserved.
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU General Public License as published by
@@ -22,9 +22,8 @@
 import AmperfyKit
 import SwiftUI
 
-struct EventLogCellView: View {
-  @State
-  var entry: LogEntry
+struct EventLogDetailView: View {
+  let entry: LogEntry
 
   var typeText: String {
     var typeLabelText = "\(entry.type.description)"
@@ -35,45 +34,35 @@ struct EventLogCellView: View {
   }
 
   var body: some View {
-    Group {
-      if entry.detailMessage != nil {
-        NavigationLink(destination: EventLogDetailView(entry: entry)) {
-          rowContent
+    ScrollView {
+      VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 4) {
+          Text(typeText)
+            .font(.caption)
+            .foregroundColor(.secondary)
+          Text("\(entry.creationDate.asIso8601String)")
+            .font(.caption)
+            .foregroundColor(.secondary)
         }
-      } else {
-        rowContent
+        Text(entry.message)
+          .font(.subheadline)
+        if let detailMessage = entry.detailMessage {
+          Divider()
+          Text(detailMessage)
+            .font(.system(.footnote, design: .monospaced))
+            .textSelection(.enabled)
+        }
       }
-    }.contextMenu {
-      Button(action: {
-        UIPasteboard.general.string = entry.message
-      }) {
-        Text("Copy to Clipboard")
-        Image(uiImage: .clipboard)
-      }
-      if let detailMessage = entry.detailMessage {
+      .padding()
+    }
+    .navigationTitle("Event Log Entry")
+    .toolbar {
+      ToolbarItem(placement: .navigationBarTrailing) {
         Button(action: {
-          UIPasteboard.general.string = detailMessage
+          UIPasteboard.general.string = entry.detailMessage ?? entry.message
         }) {
-          Text("Copy Details to Clipboard")
           Image(uiImage: .clipboard)
         }
-      }
-    }
-  }
-
-  var rowContent: some View {
-    VStack(alignment: .leading) {
-      Text(entry.message)
-        .font(.subheadline)
-        .padding([.bottom], 2)
-      HStack {
-        Text(typeText)
-          .font(.caption)
-          .foregroundColor(.secondary)
-        Spacer()
-        Text("\(entry.creationDate.asIso8601String)")
-          .font(.caption)
-          .foregroundColor(.secondary)
       }
     }
   }

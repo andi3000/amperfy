@@ -96,8 +96,11 @@ class BackendAudioPlayer: NSObject {
   private var userDefinedPlaybackRate: PlaybackRate = .one
   private var currentPreparedUrl: String = ""
   private var currentPlayUrl: String = ""
+  private var currentPlayable: AbstractPlayable?
+  private var currentCleansedUrl: String = ""
   private var nextPreloadedPlayable: AbstractPlayable?
   private var nextPreloadedUrl: String = ""
+  private var nextPreloadedCleansedUrl: String = ""
   private var isPreviousPlaylableFinshed = true
   private var isAutoStartPlayback = true
   private var seekTimeWhenStarted: Double?
@@ -268,8 +271,21 @@ class BackendAudioPlayer: NSObject {
                 self.getPlayableDownloaderCB(accountInfo).download(object: nextPreloadedPlayable)
               }
             } catch {
+              let details = PlayerErrorDetails.create(
+                error: error,
+                playable: nextPreloadedPlayable,
+                cleansedUrl: self.nextPreloadedCleansedUrl.isEmpty ? nil : self
+                  .nextPreloadedCleansedUrl,
+                playType: self.perloadedPlayType,
+                streamingMaxBitrate: self.perloadedStreamingBitrate,
+                transcodingFormat: self.preloadTranscodingFormat,
+                isOfflineMode: self.isOfflineMode,
+                isPreload: true,
+                fileManager: self.fileManager
+              )
               self.nextPreloadedPlayable = nil
-              self.eventLogger.report(topic: "Player", error: error)
+              self.nextPreloadedCleansedUrl = ""
+              self.eventLogger.report(topic: "Player", error: error, additionalDetails: details)
             }
           }
         }
@@ -292,18 +308,47 @@ class BackendAudioPlayer: NSObject {
   }
 
   private func handleError(error: Error) {
+    // AudioStreaming's delegate does not report which entry (current or
+    // preloaded) actually failed, so both are included in the debug details.
+    var details = PlayerErrorDetails.create(
+      error: error,
+      playable: currentPlayable,
+      cleansedUrl: currentCleansedUrl.isEmpty ? nil : currentCleansedUrl,
+      playType: playType,
+      streamingMaxBitrate: activeStreamingBitrate,
+      transcodingFormat: activeTranscodingFormat,
+      isOfflineMode: isOfflineMode,
+      isPreload: false,
+      fileManager: fileManager
+    )
+    if let nextPreloadedPlayable {
+      details += "\n\n--- Preloaded item (AudioStreaming does not report which entry failed) ---\n\n"
+      details += PlayerErrorDetails.create(
+        error: nil,
+        playable: nextPreloadedPlayable,
+        cleansedUrl: nextPreloadedCleansedUrl.isEmpty ? nil : nextPreloadedCleansedUrl,
+        playType: perloadedPlayType,
+        streamingMaxBitrate: perloadedStreamingBitrate,
+        transcodingFormat: preloadTranscodingFormat,
+        isOfflineMode: isOfflineMode,
+        isPreload: true,
+        fileManager: fileManager
+      )
+    }
+
     isErrorOccurred = true
     wasPlayingBeforeErrorOccurred = isPlaying
     pause()
     nextPreloadedPlayable = nil
     nextPreloadedUrl = ""
+    nextPreloadedCleansedUrl = ""
     isPreviousPlaylableFinshed = true
     activeStreamingBitrate = nil
     perloadedStreamingBitrate = nil
     activeTranscodingFormat = nil
     preloadTranscodingFormat = nil
     restartPlayer()
-    eventLogger.report(topic: "Player Status", error: error)
+    eventLogger.report(topic: "Player Status", error: error, additionalDetails: details)
     responder?.notifyErrorOccurred(error: error)
     if isTriggerReinsertPlayableAllowed {
       isTriggerReinsertPlayableAllowed = false
@@ -399,6 +444,8 @@ class BackendAudioPlayer: NSObject {
       os_log(.default, "Play Preloaded: %s", nextPreloadedPlayable.displayString)
       currentPreparedUrl = ""
       currentPlayUrl = nextPreloadedUrl
+      currentPlayable = nextPreloadedPlayable
+      currentCleansedUrl = nextPreloadedCleansedUrl
       playType = perloadedPlayType
       perloadedPlayType = nil
       activeStreamingBitrate = perloadedStreamingBitrate
@@ -410,21 +457,20 @@ class BackendAudioPlayer: NSObject {
       applyReplayGain()
       self.nextPreloadedPlayable = nil
       nextPreloadedUrl = ""
+      nextPreloadedCleansedUrl = ""
       responder?.notifyItemPreparationFinished()
     } else if let relFilePath = playable.relFilePath,
               fileManager.fileExits(relFilePath: relFilePath) {
       currentPlayUrl = ""
       nextPreloadedPlayable = nil
       nextPreloadedUrl = ""
+      nextPreloadedCleansedUrl = ""
       activeStreamingBitrate = nil
       perloadedStreamingBitrate = nil
       activeTranscodingFormat = nil
       preloadTranscodingFormat = nil
       guard playable.isPlayableOniOS else {
-        reactToIncompatibleContentType(
-          contentType: playable.fileContentType ?? "",
-          playableDisplayTitle: playable.displayString
-        )
+        reactToIncompatibleContentType(playable: playable)
         return
       }
       currentReplayGainValue = playable.replayGainTrackGain
@@ -436,16 +482,14 @@ class BackendAudioPlayer: NSObject {
       currentPlayUrl = ""
       nextPreloadedPlayable = nil
       nextPreloadedUrl = ""
+      nextPreloadedCleansedUrl = ""
       activeStreamingBitrate = nil
       perloadedStreamingBitrate = nil
       activeTranscodingFormat = nil
       preloadTranscodingFormat = nil
       guard playable.isPlayableOniOS || streamingTranscodings
         .isTranscodingActive(networkMonitor: networkMonitor) else {
-        reactToIncompatibleContentType(
-          contentType: playable.fileContentType ?? "",
-          playableDisplayTitle: playable.displayString
-        )
+        reactToIncompatibleContentType(playable: playable)
         return
       }
       if let radio = playable.asRadio {
@@ -453,7 +497,7 @@ class BackendAudioPlayer: NSObject {
         guard let urlString = radio.url,
               URL(string: urlString) != nil
         else {
-          reactToInvalidRadioUrl(playableDisplayTitle: playable.displayString)
+          reactToInvalidRadioUrl(playable: playable)
           return
         }
       }
@@ -470,9 +514,20 @@ class BackendAudioPlayer: NSObject {
           }
           self.responder?.notifyItemPreparationFinished()
         } catch {
+          let details = PlayerErrorDetails.create(
+            error: error,
+            playable: playable,
+            cleansedUrl: self.currentCleansedUrl.isEmpty ? nil : self.currentCleansedUrl,
+            playType: self.playType,
+            streamingMaxBitrate: self.activeStreamingBitrate,
+            transcodingFormat: self.activeTranscodingFormat,
+            isOfflineMode: self.isOfflineMode,
+            isPreload: false,
+            fileManager: self.fileManager
+          )
           self.responder?.notifyErrorOccurred(error: error)
           self.responder?.notifyItemPreparationFinished()
-          self.eventLogger.report(topic: "Player", error: error)
+          self.eventLogger.report(topic: "Player", error: error, additionalDetails: details)
         }
       }
     } else {
@@ -481,24 +536,49 @@ class BackendAudioPlayer: NSObject {
     }
   }
 
-  private func reactToIncompatibleContentType(contentType: String, playableDisplayTitle: String) {
+  private func reactToIncompatibleContentType(playable: AbstractPlayable) {
     clearPlayer()
+    let contentType = playable.fileContentType ?? ""
+    let details = PlayerErrorDetails.create(
+      error: nil,
+      playable: playable,
+      cleansedUrl: nil,
+      playType: nil,
+      streamingMaxBitrate: nil,
+      transcodingFormat: nil,
+      isOfflineMode: isOfflineMode,
+      isPreload: false,
+      fileManager: fileManager
+    )
     eventLogger.info(
       topic: "Player Info",
       statusCode: .playerError,
-      message: "Content type \"\(contentType)\" of \"\(playableDisplayTitle)\" is not playable via Amperfy. Activating transcoding in Settings could resolve this issue.",
-      displayPopup: true
+      message: "Content type \"\(contentType)\" of \"\(playable.displayString)\" is not playable via Amperfy. Activating transcoding in Settings could resolve this issue.",
+      displayPopup: true,
+      detailMessage: details
     )
     responder?.notifyItemPreparationFinished()
   }
 
-  private func reactToInvalidRadioUrl(playableDisplayTitle: String) {
+  private func reactToInvalidRadioUrl(playable: AbstractPlayable) {
     clearPlayer()
+    let details = PlayerErrorDetails.create(
+      error: nil,
+      playable: playable,
+      cleansedUrl: nil,
+      playType: nil,
+      streamingMaxBitrate: nil,
+      transcodingFormat: nil,
+      isOfflineMode: isOfflineMode,
+      isPreload: false,
+      fileManager: fileManager
+    )
     eventLogger.info(
       topic: "Player Info",
       statusCode: .playerError,
-      message: "Radio \"\(playableDisplayTitle)\" has an invalid stream URL.",
-      displayPopup: true
+      message: "Radio \"\(playable.displayString)\" has an invalid stream URL.",
+      displayPopup: true,
+      detailMessage: details
     )
     responder?.notifyItemPreparationFinished()
   }
@@ -507,8 +587,11 @@ class BackendAudioPlayer: NSObject {
     isPreviousPlaylableFinshed = true
     currentPreparedUrl = ""
     currentPlayUrl = ""
+    currentPlayable = nil
+    currentCleansedUrl = ""
     nextPreloadedPlayable = nil
     nextPreloadedUrl = ""
+    nextPreloadedCleansedUrl = ""
     playType = nil
     perloadedPlayType = nil
     activeStreamingBitrate = nil
@@ -534,9 +617,12 @@ class BackendAudioPlayer: NSObject {
     if queueType == .play {
       playType = .cache
       perloadedPlayType = nil
+      currentPlayable = playable
+      currentCleansedUrl = fileURL.absoluteString
       os_log(.default, "Play Cache: %s (%s)", playable.displayString, fileURL.absoluteString)
     } else {
       perloadedPlayType = .cache
+      nextPreloadedCleansedUrl = fileURL.absoluteString
       os_log(.default, "Insert Cache: %s (%s)", playable.displayString, fileURL.absoluteString)
     }
     if playable.isSong { userStatistics.playedSong(isPlayedFromCache: true) }
@@ -551,6 +637,7 @@ class BackendAudioPlayer: NSObject {
     let streamingMaxBitrate = streamingMaxBitrates.getActive(networkMonitor: networkMonitor)
     let streamingTranscodingFormat = streamingTranscodings.getActive(networkMonitor: networkMonitor)
     var httpHeaders: [String: String] = [:]
+    var cleansedUrlString = ""
     @MainActor
     func provideUrl() async throws -> URL {
       if let radio = playable.asRadio {
@@ -560,6 +647,7 @@ class BackendAudioPlayer: NSObject {
           throw BackendError.invalidUrl
         }
         playType = .stream
+        cleansedUrlString = streamUrl.absoluteString
         return streamUrl
       } else {
         if queueType == .play {
@@ -579,14 +667,22 @@ class BackendAudioPlayer: NSObject {
         }
         let backendApi = getBackendApiCB(accountInfo)
         httpHeaders = backendApi.httpHeaders
-        return try await backendApi.generateUrl(
+        let streamUrl = try await backendApi.generateUrl(
           forStreamingPlayable: playable.info,
           maxBitrate: streamingMaxBitrate,
           formatPreference: streamingTranscodingFormat
         )
+        cleansedUrlString = backendApi.cleanse(url: streamUrl).description
+        return streamUrl
       }
     }
     let streamUrl = try await provideUrl()
+    if queueType == .play {
+      currentPlayable = playable
+      currentCleansedUrl = cleansedUrlString
+    } else {
+      nextPreloadedCleansedUrl = cleansedUrlString
+    }
 
     if queueType == .play {
       os_log(

@@ -94,13 +94,14 @@ public class EventLogger {
     topic: String,
     statusCode: AmperfyLogStatusCode,
     message: String,
-    displayPopup: Bool
+    displayPopup: Bool,
+    detailMessage: String? = nil
   ) {
     report(
       topic: topic,
       statusCode: statusCode,
       shortMessage: message,
-      detailMessage: message,
+      detailMessage: detailMessage ?? message,
       logType: .info,
       displayPopup: displayPopup
     )
@@ -159,9 +160,18 @@ public class EventLogger {
     )
   }
 
-  public func report(topic: String, error: Error, displayPopup: Bool = true) {
+  public func report(
+    topic: String,
+    error: Error,
+    displayPopup: Bool = true,
+    additionalDetails: String? = nil
+  ) {
     if let apiError = error as? ResponseError {
       return report(topic: topic, error: apiError, displayPopup: displayPopup)
+    }
+    var detailMessage = error.localizedDescription
+    if let additionalDetails, !additionalDetails.isEmpty {
+      detailMessage += "\n\n" + additionalDetails
     }
     saveAndDisplay(
       topic: topic,
@@ -171,7 +181,7 @@ public class EventLogger {
       logMessage: topic + ": " + error.localizedDescription,
       displayPopup: displayPopup,
       popupMessage: error.localizedDescription,
-      detailMessage: error.localizedDescription
+      detailMessage: detailMessage
     )
   }
 
@@ -212,6 +222,9 @@ public class EventLogger {
     detailMessage: String
   ) {
     os_log("%s", log: self.log, type: .error, logMessage)
+    // only persist the detail text when it carries more information than the
+    // short popup message, so the database doesn't grow for ordinary logs
+    let persistedDetailMessage = detailMessage != popupMessage ? detailMessage : nil
     Task { @MainActor in
       do {
         try await storage.async.perform { asynCompanion in
@@ -219,6 +232,7 @@ public class EventLogger {
           logEntry.type = logType
           logEntry.statusCode = statusCode
           logEntry.message = logMessage
+          logEntry.detailMessage = persistedDetailMessage
           asynCompanion.saveContext()
         }
         if displayPopup {
